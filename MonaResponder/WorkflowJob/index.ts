@@ -10,6 +10,11 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
     const sender = req.body?.sender?.login;
     const run_id = req.body?.workflow_job?.run_id;
 
+    //debug
+    // const msg = `Action: ${action}, org: ${org}, repo: ${repo}, sender: ${sender}, run_id: ${run_id}`;
+    // context.res = {
+    //     body: msg
+    // };
     const msg = action
         ? `Hello, ${sender}. Acknowledge receipt of ${action} event in repo ${repo}.`
         : "This HTTP triggered function executed successfully. Expected 'workflow_job' payload.";
