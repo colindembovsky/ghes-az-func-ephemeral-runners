@@ -24,7 +24,7 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
     - name: Create function app
-      run: ../infra/deploy-function.yml
+      run: ../infra/deploy.sh
       env:
         rg: ${{ env.rg }}
         server: ${{ env.ghes }}
