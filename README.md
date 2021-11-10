@@ -21,6 +21,8 @@ npm start
 
 ### curl
 1. Open a new terminal
+1. Comment out the hash check logic
+1. Run this:
 ```bash
 curl --header "Content-Type: application/json" --request POST http://localhost:7071/api/WorkflowJob -L --data "@test/workflow_job.json" -i
 ```
