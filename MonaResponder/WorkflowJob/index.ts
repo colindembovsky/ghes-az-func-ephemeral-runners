@@ -1,34 +1,47 @@
 import { AzureFunction, Context, HttpRequest } from "@azure/functions";
 import { Octokit } from "@octokit/core";
+import * as crypto from "crypto";
 
 const httpTrigger: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
     context.log('HTTP trigger function processed a request.');
-    
-    const action = req.body?.action;
-    const org = req.body?.organization?.login;
-    const repo = req.body?.repository?.name;
-    const actor = req.body?.sender?.login;
-    const labels = req.body?.workflow_job?.labels;
-    
-    const msg = action
-    ? `Hello, ${actor}. Acknowledge receipt of ${action} event in repo ${repo}.`
-    : "This HTTP triggered function executed successfully. Expected 'workflow_job' payload.";
-    context.log(msg);
 
-    // log info
-    context.log(`Action: ${action}, org: ${org}, repo: ${repo}, sender: ${actor}, labels: ${labels}`);
-    context.log(`GHES: ${process.env["GITHUB_SERVER"]}`);
-    
-    if (action !== "in_progress") {
-        const dispatch = await triggerAction(context, org, repo, action, actor, labels);
+    const hmac = crypto.createHmac("sha1", "GitHubWebHooksR0ck!");
+    const signature = hmac.update(JSON.stringify(req.body)).digest('hex');
+    const shaSignature = `sha1=${signature}`;
+    const gitHubSignature = req.headers['x-hub-signature'];
+
+    if (shaSignature.localeCompare(gitHubSignature)) {
         context.res = {
-            status: dispatch.status,
-            body: dispatch.data
+            status: 401,
+            body: "Signatures don't match"
         };
     } else {
-        context.res = {
-            body: "Nothing to do for 'in_progress' event"
-        };
+        const action = req.body?.action;
+        const org = req.body?.organization?.login;
+        const repo = req.body?.repository?.name;
+        const actor = req.body?.sender?.login;
+        const labels = req.body?.workflow_job?.labels;
+        
+        const msg = action
+        ? `Hello, ${actor}. Acknowledge receipt of ${action} event in repo ${repo}.`
+        : "This HTTP triggered function executed successfully. Expected 'workflow_job' payload.";
+        context.log(msg);
+
+        // log info
+        context.log(`Action: ${action}, org: ${org}, repo: ${repo}, sender: ${actor}, labels: ${labels}`);
+        context.log(`GHES: ${process.env["GITHUB_SERVER"]}`);
+        
+        if (action !== "in_progress") {
+            const dispatch = await triggerAction(context, org, repo, action, actor, labels);
+            context.res = {
+                status: dispatch.status,
+                body: dispatch.data
+            };
+        } else {
+            context.res = {
+                body: "Nothing to do for 'in_progress' event"
+            };
+        }
     }
 };
 
