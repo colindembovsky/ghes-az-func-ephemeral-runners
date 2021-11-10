@@ -7,37 +7,57 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
     const action = req.body?.action;
     const org = req.body?.organization?.login;
     const repo = req.body?.repository?.name;
-    const sender = req.body?.sender?.login;
+    const actor = req.body?.sender?.login;
     const run_id = req.body?.workflow_job?.run_id;
-
     
     const msg = action
-    ? `Hello, ${sender}. Acknowledge receipt of ${action} event in repo ${repo}.`
+    ? `Hello, ${actor}. Acknowledge receipt of ${action} event in repo ${repo}.`
     : "This HTTP triggered function executed successfully. Expected 'workflow_job' payload.";
     context.log(msg);
 
     // log info
-    context.log(`Action: ${action}, org: ${org}, repo: ${repo}, sender: ${sender}, run_id: ${run_id}`);
+    context.log(`Action: ${action}, org: ${org}, repo: ${repo}, sender: ${actor}, run_id: ${run_id}`);
+    context.log(`GHES: ${process.env["GITHUB_SERVER"]}`);
     
-    const dispatch = await triggerAction(org, repo, action, run_id);
-    context.res = {
-        status: dispatch.status,
-        body: dispatch.data
-    };
+    if (action !== "in_progress") {
+        const dispatch = await triggerAction(context, org, repo, action, actor, run_id);
+        context.res = {
+            status: dispatch.status,
+            body: dispatch.data
+        };
+    } else {
+        context.res = {
+            body: "Nothing to do for 'in_progress' event"
+        };
+    }
 };
 
-async function triggerAction(org: string, repo: string, action: string, run_id: string) {
+async function triggerAction(context: Context, org: string, repo: string, action: string, actor: string, run_id: string) {
+    const baseUrl = process.env["GITHUB_SERVER"] ? `${process.env["GITHUB_SERVER"]}/api/v3` : null;
+    context.log(`Attempting auth to GHES ${process.env["GITHUB_SERVER"]}`);
     const octokit = new Octokit({ 
         auth: process.env["PAT"],
-        baseUrl: process.env["GITHUB_SERVER"] ? `${process.env["GITHUB_SERVER"]}/api/v3` : null
+        baseUrl: baseUrl
     });
+    context.log("Auth successful");
 
+    const spinner_org = process.env["EPHEMERAL_SPINNER_ORG"];
+    const spinner_repo = process.env["EPHEMERAL_SPINNER_REPO"];
+    const spinner_worfklow = process.env["EPHEMERAL_SPINNER_WORKFLOW"];
+    const spinner_ref = process.env["EPHEMERAL_SPINNER_WORKFLOW_REF"];
+    
+    context.log(`Attempting dispatch to /repos/${spinner_org}/${spinner_repo}/actions/workflows/${spinner_worfklow}/dispatches`)
     return await octokit.request('POST /repos/{org}/{repo}/actions/workflows/{workflow_name}/dispatches', {
-        org: org,
-        repo: repo,
-        workflow_name: process.env["EPHEMERAL_RUNNER_WORKFLOW_NAME"],
-        event_type: action,
-        client_payload: {
+        baseUrl: baseUrl,
+        org: spinner_org,
+        repo: spinner_repo,
+        workflow_name: spinner_worfklow,
+        ref: spinner_ref,
+        inputs: {
+            action: action,
+            org: org,
+            repo: repo,
+            actor: actor,
             identifier: `${org}-${repo}-${run_id}`
         }
     });

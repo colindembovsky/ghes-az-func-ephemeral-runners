@@ -2,6 +2,7 @@ name: Ephemeral
 
 on:
   repository_dispatch:
+    types: [ ephemeral_deploy, ephemeral_destroy ]
 
 env:
   rg_name: cd-ephemeral
@@ -23,7 +24,7 @@ jobs:
 
   deploy_runner:
     name: Deploy Ephemeral Runner
-    if: ${{ github.event.action == 'deploy' }}
+    if: ${{ github.event.action == 'ephemeral_deploy' }}
     runs-on: [ self-hosted, permanent ]
     steps:
     - uses: central/az-login@v1
@@ -45,7 +46,7 @@ jobs:
 
   delete_aci:
     name: Delete Dead ACI
-    if: ${{ github.event.action == 'destroy' }}
+    if: ${{ github.event.action == 'ephemeral_destroy' }}
     runs-on: [ self-hosted, permanent ]
     steps:
     - uses: central/az-login@v1
@@ -55,4 +56,3 @@ jobs:
     - name: Delete ACI
       run: |
         az container delete -g ${{ env.rg_name }} -n ${{ env.aci_prefix }}-${{ github.event.client_payload.identifier }} --yes
-  
