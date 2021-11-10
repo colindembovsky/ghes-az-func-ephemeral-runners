@@ -1,8 +1,23 @@
 name: Ephemeral
 
 on:
-  repository_dispatch:
-    types: [ ephemeral_deploy, ephemeral_destroy ]
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Action to take (deploy or destroy)
+        required: true
+      org:
+        description: Org requesting an ephemeral runner
+        required: true
+      repo:
+        description: Repo requesting an ephemeral runner
+        required: true
+      actor:
+        description: Actor requesting an ephemeral runner
+        required: true
+      identifier:
+        description: Unique identifier for the ephemeral runner
+        required: true
 
 env:
   rg_name: cd-ephemeral
@@ -15,16 +30,14 @@ jobs:
     runs-on: [self-hosted, permanent]
     steps:
       - uses: actions/checkout@v1
-      - name: Echo event
+      - name: Echo inputs
         run: |
-          echo '${{ toJson(github.event) }}'
-      - name: Echo client_payload
-        run: |
-          echo '${{ toJson(github.event.client_payload) }}'
+          echo '${{ toJson(github.event.inputs) }}'
 
   deploy_runner:
     name: Deploy Ephemeral Runner
-    if: ${{ github.event.action == 'ephemeral_deploy' }}
+    needs: debug
+    if: ${{ github.event.inputs.action == 'queued' }}
     runs-on: [ self-hosted, permanent ]
     steps:
     - uses: central/az-login@v1
@@ -34,19 +47,20 @@ jobs:
     - name: Create runner
       run: |
         az container create \
-          -g ${{ env.rg_name }} -n ${{ env.aci_prefix }}-${{ github.event.client_payload.identifier }} \
+          -g ${{ env.rg_name }} -n ${{ env.aci_prefix }}-${{ github.event.inputs.identifier }} \
           --image ${{ env.runner_image }} --restart-policy Never \
           --environment-variables \
-            RUNNER_REPOSITORY_URL=${{ env.ghes_url }}/${{ github.repository }} \
+            RUNNER_REPOSITORY_URL=${{ env.ghes_url }}/${{ github.event.inputs.org }}/${{ github.event.inputs.repo }} \
             GITHUB_TOKEN=${{ secrets.REPO_PAT }} \
             RUNNER_OPTIONS="--ephemeral" \
-            RUNNER_LABELS=${{ github.event.client_payload.identifier }} \
+            RUNNER_LABELS=${{ github.event.inputs.identifier }} \
             GITHUB_SERVER=${{ env.ghes_url }} \
-            RUNNER_NAME=${{ env.aci_prefix }}-${{ github.event.client_payload.identifier }}
+            RUNNER_NAME=${{ env.aci_prefix }}-${{ github.event.inputs.identifier }}
 
   delete_aci:
     name: Delete Dead ACI
-    if: ${{ github.event.action == 'ephemeral_destroy' }}
+    needs: debug
+    if: ${{ github.event.inputs.action == 'completed' }}
     runs-on: [ self-hosted, permanent ]
     steps:
     - uses: central/az-login@v1
@@ -55,4 +69,5 @@ jobs:
     
     - name: Delete ACI
       run: |
-        az container delete -g ${{ env.rg_name }} -n ${{ env.aci_prefix }}-${{ github.event.client_payload.identifier }} --yes
+        az container delete -g ${{ env.rg_name }} -n ${{ env.aci_prefix }}-${{ github.event.inputs.identifier }} --yes
+  

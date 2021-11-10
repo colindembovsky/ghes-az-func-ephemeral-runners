@@ -12,8 +12,8 @@ export EPHEMERAL_SPINNER_ORG=central
 export EPHEMERAL_SPINNER_REPO=ephemeral-runner
 export EPHEMERAL_SPINNER_WORKFLOW=ephemeral.yml
 export EPHEMERAL_SPINNER_WORKFLOW_REF=main
-export PAT=<PAT with repo and workflow permissions>
 export GITHUB_SERVER=https://colindembovsky-0cd7b2095901bb090.gh-quality.net
+export PAT=<PAT with repo and workflow permissions>
 
 # run the function emulator
 npm start
