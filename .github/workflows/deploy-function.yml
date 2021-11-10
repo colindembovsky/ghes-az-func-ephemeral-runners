@@ -24,9 +24,7 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
     - name: Create function app
-      run: |
-        ./deploy-function.yml
-      working-directory: ../infra
+      run: ../infra/deploy-function.yml
       env:
         rg: ${{ env.rg }}
         server: ${{ env.ghes }}
@@ -34,14 +32,10 @@ jobs:
         org: ${{ env.org }}
         repo: ${{ env.repo }}
     - name: Install func tools
-      run: |
-        npm install -g azure-functions-core-tools
+      run: npm install -g azure-functions-core-tools
     - name: Build
-      run: |
-        npm run build:production
+      run: npm run build:production
     - name: Pack function
-      run: |
-        func pack
+      run: func pack
     - name: Deploy function
-      run: |
-        az functionapp deploy -n ${{ env.rg }}fn -g ${{ env.rg }} --src-path MonaResponder.zip
+      run: az functionapp deploy -n ${{ env.rg }}fn -g ${{ env.rg }} --src-path MonaResponder.zip
