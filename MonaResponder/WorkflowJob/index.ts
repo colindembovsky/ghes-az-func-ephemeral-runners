@@ -10,24 +10,23 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
     const sender = req.body?.sender?.login;
     const run_id = req.body?.workflow_job?.run_id;
 
-    //debug
-    // const msg = `Action: ${action}, org: ${org}, repo: ${repo}, sender: ${sender}, run_id: ${run_id}`;
-    // context.res = {
-    //     body: msg
-    // };
+    
     const msg = action
-        ? `Hello, ${sender}. Acknowledge receipt of ${action} event in repo ${repo}.`
-        : "This HTTP triggered function executed successfully. Expected 'workflow_job' payload.";
+    ? `Hello, ${sender}. Acknowledge receipt of ${action} event in repo ${repo}.`
+    : "This HTTP triggered function executed successfully. Expected 'workflow_job' payload.";
     context.log(msg);
 
-    const dispatch = await triggerAction(org, repo, action, run_id)
+    // log info
+    context.log(`Action: ${action}, org: ${org}, repo: ${repo}, sender: ${sender}, run_id: ${run_id}`);
+    
+    const dispatch = await triggerAction(org, repo, action, run_id);
     context.res = {
         status: dispatch.status,
         body: dispatch.data
     };
 };
 
-async function triggerAction(org: string, repo: string, action: string, label: string) {
+async function triggerAction(org: string, repo: string, action: string, run_id: string) {
     const octokit = new Octokit({ 
         auth: process.env["PAT"],
         baseUrl: process.env["GITHUB_SERVER"] ? `${process.env["GITHUB_SERVER"]}/api/v3` : null
@@ -37,9 +36,9 @@ async function triggerAction(org: string, repo: string, action: string, label: s
         org: org,
         repo: repo,
         workflow_name: process.env["EPHEMERAL_RUNNER_WORKFLOW_NAME"],
-        inputs: {
-            label: label,
-            action: action
+        event_type: action,
+        client_payload: {
+            identifier: `${org}-${repo}-${run_id}`
         }
     });
 }

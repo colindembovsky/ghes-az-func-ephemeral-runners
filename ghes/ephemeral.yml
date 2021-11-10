@@ -1,0 +1,58 @@
+name: Ephemeral
+
+on:
+  repository_dispatch:
+
+env:
+  rg_name: cd-ephemeral
+  aci_prefix: gh
+  runner_image: ghcr.io/colindembovsky/ubuntu-actions-runner:77e620b571af517697a900c6290388d5c6ed4294
+  ghes_url: https://colindembovsky-0cd7b2095901bb090.gh-quality.net
+  
+jobs:
+  debug:
+    runs-on: [self-hosted, permanent]
+    steps:
+      - uses: actions/checkout@v1
+      - name: Echo event
+        run: |
+          echo '${{ toJson(github.event) }}'
+      - name: Echo client_payload
+        run: |
+          echo '${{ toJson(github.event.client_payload) }}'
+
+  deploy_runner:
+    name: Deploy Ephemeral Runner
+    if: ${{ github.event.action == 'deploy' }}
+    runs-on: [ self-hosted, permanent ]
+    steps:
+    - uses: central/az-login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Create runner
+      run: |
+        az container create \
+          -g ${{ env.rg_name }} -n ${{ env.aci_prefix }}-${{ github.event.client_payload.identifier }} \
+          --image ${{ env.runner_image }} --restart-policy Never \
+          --environment-variables \
+            RUNNER_REPOSITORY_URL=${{ env.ghes_url }}/${{ github.repository }} \
+            GITHUB_TOKEN=${{ secrets.REPO_PAT }} \
+            RUNNER_OPTIONS="--ephemeral" \
+            RUNNER_LABELS=${{ github.event.client_payload.identifier }} \
+            GITHUB_SERVER=${{ env.ghes_url }} \
+            RUNNER_NAME=${{ env.aci_prefix }}-${{ github.event.client_payload.identifier }}
+
+  delete_aci:
+    name: Delete Dead ACI
+    if: ${{ github.event.action == 'destroy' }}
+    runs-on: [ self-hosted, permanent ]
+    steps:
+    - uses: central/az-login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Delete ACI
+      run: |
+        az container delete -g ${{ env.rg_name }} -n ${{ env.aci_prefix }}-${{ github.event.client_payload.identifier }} --yes
+  
