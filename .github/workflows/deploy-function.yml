@@ -26,7 +26,7 @@ jobs:
     - name: Create function app
       run: |
         ./deploy-function.yml
-      working-directory: infra
+      working-directory: ../infra
       env:
         rg: ${{ env.rg }}
         server: ${{ env.ghes }}
