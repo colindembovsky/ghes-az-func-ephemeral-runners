@@ -33,6 +33,8 @@ jobs:
         repo: ${{ env.repo }}
     - name: Install func tools
       run: npm install -g azure-functions-core-tools
+    - name: Install packages
+      run: npm install
     - name: Build
       run: npm run build:production
     - name: Pack function
