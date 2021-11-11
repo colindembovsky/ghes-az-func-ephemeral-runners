@@ -13,17 +13,14 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
     const gitHubSignature = req.headers['x-hub-signature'];
     context.log(`signature header: ${gitHubSignature}`);
 
-    const payload = req.body.payload;
-    console.log("PAYLOAD is:");
-    console.log(JSON.stringify(payload));
-    
-    if (!shaSignature.localeCompare(gitHubSignature)) {
+    if (shaSignature.localeCompare(gitHubSignature)) {
+        context.log("Signatures do not match!");
         context.res = {
             status: 401,
             body: "Signatures don't match"
         };
     } else {
-        context.log(`body: ${JSON.stringify(req.body)}`);
+        context.log("Signatures match - proceeding!");
         const action = req.body?.action;
         
         let msg = "This HTTP triggered function executed successfully. Expected 'workflow_job' payload.";
@@ -48,12 +45,14 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
         context.log(`GHES: ${process.env["GITHUB_SERVER"]}`);
         
         if (action !== "in_progress") {
+            console.log(`Executing action ${action}`);
             const dispatch = await triggerAction(context, org, repo, action, actor, labels);
             context.res = {
                 status: dispatch.status,
                 body: dispatch.data
             };
         } else {
+            console.log("Nothing to do for 'in_progress' event");
             context.res = {
                 body: "Nothing to do for 'in_progress' event"
             };
