@@ -38,11 +38,22 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
         const org = req.body?.organization?.login;
         const repo = req.body?.repository?.name;
         const actor = req.body?.sender?.login;
-        const labels = req.body?.workflow_job?.labels;
+        const labels = req.body?.workflow_job?.labels as string[];
 
         // log info
         context.log(`Action: ${action}, org: ${org}, repo: ${repo}, sender: ${actor}, labels: ${labels}`);
         context.log(`GHES: ${process.env["GITHUB_SERVER"]}`);
+
+        // check if the ignore label matches
+        const ignoreLabel = process.env["IGNORE_LABEL"].toLocaleLowerCase();
+        if (labels.findIndex(l => l.toLocaleLowerCase() === ignoreLabel) > -1) {
+            const msg = `Found label ${ignoreLabel} so ignoring this event`;
+            console.log(msg);
+            context.res = {
+                body: msg
+            };
+            return;
+        }
         
         if (action !== "in_progress") {
             console.log(`Executing action ${action}`);
@@ -52,9 +63,9 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
                 body: dispatch.data
             };
         } else {
-            console.log("Nothing to do for 'in_progress' event");
+            const msg = "Nothing to do for 'in_progress' event";
             context.res = {
-                body: "Nothing to do for 'in_progress' event"
+                body: msg
             };
         }
     }

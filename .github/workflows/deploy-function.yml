@@ -10,6 +10,7 @@ env:
   ghes: https://colindembovsky-0cd7b2095901bb090.gh-quality.net
   org: central
   repo: ephemeral-runner
+  ignore-label: permanent
 
 jobs:
   deploy:
@@ -34,6 +35,7 @@ jobs:
         org: ${{ env.org }}
         repo: ${{ env.repo }}
         secret: ${{ secrets.SECRET }}
+        ignorelabel: ${{ env.ignorelabel }}
     - name: Install func tools
       run: npm install -g azure-functions-core-tools
     - name: Install packages

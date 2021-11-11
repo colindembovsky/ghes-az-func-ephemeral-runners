@@ -17,6 +17,7 @@ export EPHEMERAL_SPINNER_WORKFLOW=ephemeral.yml
 export EPHEMERAL_SPINNER_WORKFLOW_REF=main
 export GITHUB_SERVER=https://colindembovsky-0cd7b2095901bb090.gh-quality.net
 export GITHUB_SECRET=<secret>
+export IGNORE_LABEL=permanent
 export PAT=<PAT with repo and workflow permissions>
 
 # run the function emulator
@@ -53,11 +54,14 @@ env:
   ghes: https://colindembovsky-0cd7b2095901bb090.gh-quality.net
   org: central
   repo: ephemeral-runner
+  ignore-label: permanent
 ```  
 
 Update these as necessary.
 
-> **Note:** The workflow that is triggered is `ghes/org/repo/ephemeral.yml@main` by default.
+> **Note**: The `ignore-label` is **CRITICAL**. If you do not configure this, you will get an infinte loop where the function is queuing a workflow which triggers another queue and so on and so on. Your _permanent_ runners should have the `permanent` label to avoid this!!
+
+> **Note**: The workflow that is triggered is `ghes/org/repo/ephemeral.yml@main` by default.
 
 Then excute the `🚀  Deploy WebHook Fn` Action!
 
