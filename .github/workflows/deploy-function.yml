@@ -2,6 +2,8 @@ name: 🚀  Deploy WebHook Fn
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ main ]
 
 env:
   rg: cdfunc
