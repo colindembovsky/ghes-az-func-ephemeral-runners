@@ -8,7 +8,7 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
     const hmac = crypto.createHmac("sha1", "GitHubWebHooksR0ck!");
     const signature = hmac.update(JSON.stringify(req.body)).digest('hex');
     const shaSignature = `sha1=${signature}`;
-    const gitHubSignature = req.headers['X-Hub-Signature'];
+    const gitHubSignature = req.headers['x-hub-signature'] ?? req.headers['X-Hub-Signature'];
     context.log(`calculated signature: ${shaSignature}`);
     context.log(`signature header: ${gitHubSignature}`);
     
