@@ -41,3 +41,7 @@ jobs:
       run: func pack
     - name: Deploy function
       run: az functionapp deploy -n ${{ env.rg }}fn -g ${{ env.rg }} --src-path MonaResponder.zip
+    - name: Display URL
+      run: |
+        url=$(az functionapp show -g ${{ env.rg }} -n ${{ env.rg }}fn --query "hostNames[0]" -o tsv)
+        echo "URL for WebHook is https://$url/api/WorkflowJob"
