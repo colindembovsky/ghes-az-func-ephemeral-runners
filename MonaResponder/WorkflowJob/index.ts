@@ -9,7 +9,8 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
     const signature = hmac.update(JSON.stringify(req.body)).digest('hex');
     const shaSignature = `sha1=${signature}`;
     const gitHubSignature = req.headers['x-hub-signature'];
-
+    context.log(`signature: ${gitHubSignature}`);
+    
     if (shaSignature.localeCompare(gitHubSignature)) {
         context.res = {
             status: 401,
