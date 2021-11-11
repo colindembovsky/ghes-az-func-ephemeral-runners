@@ -33,6 +33,7 @@ jobs:
         pat: ${{ secrets.REPO_PAT }}
         org: ${{ env.org }}
         repo: ${{ env.repo }}
+        secret: ${{ secrets.SECRET }}
     - name: Install func tools
       run: npm install -g azure-functions-core-tools
     - name: Install packages
@@ -40,9 +41,9 @@ jobs:
     - name: Build
       run: npm run build:production
     - name: Pack function
-      run: func pack
+      run: func pack --typescript
     - name: Deploy function
-      run: az functionapp deploy -n ${{ env.rg }}fn -g ${{ env.rg }} --src-path MonaResponder.zip
+      run: az functionapp deploy -n ${{ env.rg }}fn -g ${{ env.rg }} --src-path MonaResponder.zip --type zip --clean true --restart true
     - name: Display URL
       run: |
         url=$(az functionapp show -g ${{ env.rg }} -n ${{ env.rg }}fn --query "hostNames[0]" -o tsv)

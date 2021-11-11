@@ -29,6 +29,7 @@ az functionapp config appsettings set -n $fn -g $rg --settings \
     EPHEMERAL_SPINNER_WORKFLOW=ephemeral.yml \
     EPHEMERAL_SPINNER_WORKFLOW_REF=main \
     GITHUB_SERVER=$server \
+    GITHUB_SECRET=$secret \
     PAT=$pat
 
 # echo "Pack"

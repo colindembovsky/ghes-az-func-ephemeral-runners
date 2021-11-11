@@ -5,12 +5,17 @@ import * as crypto from "crypto";
 const httpTrigger: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
     context.log('HTTP trigger function processed a request.');
 
-    const hmac = crypto.createHmac("sha1", "GitHubWebHooksR0ck!");
+    const hmac = crypto.createHmac("sha1", process.env["GITHUB_SECRET"]);
     const signature = hmac.update(JSON.stringify(req.body)).digest('hex');
     const shaSignature = `sha1=${signature}`;
-    const gitHubSignature = req.headers['x-hub-signature'] ?? req.headers['X-Hub-Signature'];
     context.log(`calculated signature: ${shaSignature}`);
+    
+    const gitHubSignature = req.headers['x-hub-signature'];
     context.log(`signature header: ${gitHubSignature}`);
+
+    const payload = req.body.payload;
+    console.log("PAYLOAD is:");
+    console.log(JSON.stringify(payload));
     
     if (!shaSignature.localeCompare(gitHubSignature)) {
         context.res = {
@@ -18,17 +23,25 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
             body: "Signatures don't match"
         };
     } else {
-        context.log(`body: ${req.body}`);
+        context.log(`body: ${JSON.stringify(req.body)}`);
         const action = req.body?.action;
+        
+        let msg = "This HTTP triggered function executed successfully. Expected 'workflow_job' payload.";
+        if (action) {
+            msg = `Acknowledge receipt of ${action} event.`
+            context.log(msg);
+        } else {
+            context.res = {
+                status: 400,
+                body: "Expected 'workflow_job' payload"
+            };
+            return;
+        }
+        
         const org = req.body?.organization?.login;
         const repo = req.body?.repository?.name;
         const actor = req.body?.sender?.login;
         const labels = req.body?.workflow_job?.labels;
-        
-        const msg = action
-        ? `Hello, ${actor}. Acknowledge receipt of ${action} event in repo ${repo}.`
-        : "This HTTP triggered function executed successfully. Expected 'workflow_job' payload.";
-        context.log(msg);
 
         // log info
         context.log(`Action: ${action}, org: ${org}, repo: ${repo}, sender: ${actor}, labels: ${labels}`);
