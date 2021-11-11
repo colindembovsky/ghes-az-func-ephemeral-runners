@@ -9,9 +9,10 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
     const signature = hmac.update(JSON.stringify(req.body)).digest('hex');
     const shaSignature = `sha1=${signature}`;
     const gitHubSignature = req.headers['x-hub-signature'];
-    context.log(`signature: ${gitHubSignature}`);
+    context.log(`calculated signature: ${shaSignature}`);
+    context.log(`signature header: ${gitHubSignature}`);
     
-    if (shaSignature.localeCompare(gitHubSignature)) {
+    if (!shaSignature.localeCompare(gitHubSignature)) {
         context.res = {
             status: 401,
             body: "Signatures don't match"
