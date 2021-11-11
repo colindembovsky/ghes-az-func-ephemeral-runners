@@ -12,12 +12,13 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
     context.log(`calculated signature: ${shaSignature}`);
     context.log(`signature header: ${gitHubSignature}`);
     
-    if (shaSignature.localeCompare(gitHubSignature)) {
+    if (!shaSignature.localeCompare(gitHubSignature)) {
         context.res = {
             status: 401,
             body: "Signatures don't match"
         };
     } else {
+        context.log(`body: ${req.body}`);
         const action = req.body?.action;
         const org = req.body?.organization?.login;
         const repo = req.body?.repository?.name;
