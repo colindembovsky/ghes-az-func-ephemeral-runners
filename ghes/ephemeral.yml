@@ -16,7 +16,7 @@ on:
         description: Actor requesting an ephemeral runner
         required: true
       identifier:
-        description: Unique identifier for the ephemeral runner
+        description: Unique identifier (labels) for the ephemeral runner
         required: true
 
 env:

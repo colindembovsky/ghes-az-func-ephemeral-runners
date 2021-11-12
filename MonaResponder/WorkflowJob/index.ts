@@ -42,17 +42,18 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
 
         // log info
         context.log(`Action: ${action}, org: ${org}, repo: ${repo}, sender: ${actor}, labels: ${labels}`);
-        context.log(`GHES: ${process.env["GITHUB_SERVER"]}`);
-
+        
         // check if the ignore label matches
         const ignoreLabel = process.env["IGNORE_LABEL"].toLocaleLowerCase();
         if (labels.findIndex(l => l.toLocaleLowerCase() === ignoreLabel) > -1) {
             const msg = `Found label ${ignoreLabel} so ignoring this event`;
-            console.log(msg);
+            context.log(msg);
             context.res = {
                 body: msg
             };
             return;
+        } else {
+            context.log(`No label = ${ignoreLabel} found - proceeding`);
         }
         
         if (action !== "in_progress") {
@@ -60,7 +61,7 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
             const dispatch = await triggerAction(context, org, repo, action, actor, labels);
             context.res = {
                 status: dispatch.status,
-                body: dispatch.data
+                body: `Invoked workflow ${process.env["EPHEMERAL_SPINNER_WORKFLOW"]}. Data: ${dispatch.data}`
             };
         } else {
             const msg = "Nothing to do for 'in_progress' event";
@@ -84,7 +85,7 @@ async function triggerAction(context: Context, org: string, repo: string, action
     const spinner_repo = process.env["EPHEMERAL_SPINNER_REPO"];
     const spinner_worfklow = process.env["EPHEMERAL_SPINNER_WORKFLOW"];
     const spinner_ref = process.env["EPHEMERAL_SPINNER_WORKFLOW_REF"];
-    const unique_label = labels.filter(l => l !== "self-hosted")[0];
+    const unique_labels = labels.filter(l => l !== "self-hosted").join(",");
     
     context.log(`Attempting dispatch to /repos/${spinner_org}/${spinner_repo}/actions/workflows/${spinner_worfklow}/dispatches`)
     return await octokit.request('POST /repos/{org}/{repo}/actions/workflows/{workflow_name}/dispatches', {
@@ -98,7 +99,7 @@ async function triggerAction(context: Context, org: string, repo: string, action
             org: org,
             repo: repo,
             actor: actor,
-            identifier: `${unique_label}`
+            identifier: `${unique_labels}`
         }
     });
 }

@@ -4,7 +4,7 @@ This repo contains code for:
 1. An Azure function that can listen for `workflow_job` webhook events from a GHES instance.
 1. A workflow that can be configured in GHES to spin up ephemeral runners in Azure Container Instances (ACI) as well as tear down orphaned ACI.
 
-## Testing in CodeSpaces
+## Developing in CodeSpaces
 
 ### Start the Emulator
 ```bash
@@ -26,11 +26,13 @@ npm start
 
 ### curl
 1. Open a new terminal
-1. Comment out the hash check logic, or pass in the SHA1 hash of the payload as header `x-hub-signature` with value `sha1=<the sha>`.
 1. Run curl:
 ```bash
-curl --header "Content-Type: application/json" --request POST http://localhost:7071/api/WorkflowJob -L --data "@test/workflow_job.json" -i
+sha="123"
+curl -H "Content-Type: application/json" -H "x-hub-signature: sha1=$sha" -X POST http://localhost:7071/api/WorkflowJob -L --data "@test/completed.json" -i
 ```
+
+> **Note**: The call should fail for mismatched signature. Check the output for the calculated hash and update the `sha` variable. Then repeat the command. If you change the contents of the file, repeat this process.
 
 ## Deploying the Function to Azure
 
