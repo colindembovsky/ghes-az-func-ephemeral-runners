@@ -23,10 +23,9 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
         context.log("Signatures match - proceeding!");
         const action = req.body?.action;
         
-        let msg = "This HTTP triggered function executed successfully. Expected 'workflow_job' payload.";
+        // verify that we have a payload with an action property
         if (action) {
-            msg = `Acknowledge receipt of ${action} event.`
-            context.log(msg);
+            context.log(`Acknowledge receipt of ${action} event.`);
         } else {
             context.res = {
                 status: 400,
@@ -34,7 +33,18 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
             };
             return;
         }
+
+        // ignore 'in_progress' action
+        if (action !== "in_progress") {
+            const msg = "Nothing to do for 'in_progress' event";
+            context.log(msg);
+            context.res = {
+                body: msg
+            };
+            return;
+        }
         
+        // extract required metadata
         const org = req.body?.organization?.login;
         const repo = req.body?.repository?.name;
         const actor = req.body?.sender?.login;
@@ -66,19 +76,13 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
             context.log(`No label = ${ignoreLabel} found - proceeding`);
         }
         
-        if (action !== "in_progress") {
-            console.log(`Executing action ${action}`);
-            const dispatch = await triggerAction(context, org, repo, action, actor, labels);
-            context.res = {
-                status: dispatch.status,
-                body: `Invoked workflow ${process.env["EPHEMERAL_SPINNER_WORKFLOW"]}. Data: ${dispatch.data}`
-            };
-        } else {
-            const msg = "Nothing to do for 'in_progress' event";
-            context.res = {
-                body: msg
-            };
-        }
+        // invoke the workflow to handle the scale up/scale down action
+        context.log(`Executing action ${action}`);
+        const dispatch = await triggerAction(context, org, repo, action, actor, labels);
+        context.res = {
+            status: dispatch.status,
+            body: `Invoked workflow ${process.env["EPHEMERAL_SPINNER_WORKFLOW"]}. Data: ${dispatch.data}`
+        };
     }
 };
 
