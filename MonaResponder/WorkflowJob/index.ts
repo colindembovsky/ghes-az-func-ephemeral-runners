@@ -65,6 +65,15 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
             return;
         }
 
+        if (labels.length === 0) {
+            const msg = `No labels supplied, so ignoring this event`;
+            context.log(msg);
+            context.res = {
+                body: msg
+            };
+            return;
+        }
+
         if (labels.findIndex(l => l.toLocaleLowerCase() === ignoreLabel) > -1) {
             const msg = `Found label ${ignoreLabel} so ignoring this event`;
             context.log(msg);
@@ -73,7 +82,7 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
             };
             return;
         } else {
-            context.log(`No label = ${ignoreLabel} found - proceeding`);
+            context.log(`No label = '${ignoreLabel}' found - proceeding`);
         }
         
         // invoke the workflow to handle the scale up/scale down action
