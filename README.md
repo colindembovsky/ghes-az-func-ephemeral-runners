@@ -3,7 +3,7 @@
 This repo contains code for:
 1. An Azure function that can listen for `workflow_job` webhook events from a GHES instance.
 1. A workflow that can be configured in GHES to spin up ephemeral runners in Azure Container Instances (ACI) as well as tear down orphaned ACI.
-1. The steps that deploy (and clean up resources) are handled inside a workflow, so can easily be updated.
+1. The steps that deploy (and clean up resources) are handled inside a workflow _instead of in the Azure Function_, so can easily be updated.
 
 > **Note**: The `PATs` that are used are VISIBLE as application settings on the Azure Function and inside the ACI containers. Make sure that you have proper RBAC configured for the Azure Function App as well as the ACI instances. Ideally, only administrators should be able to see these resources.
 
