@@ -3,6 +3,9 @@
 This repo contains code for:
 1. An Azure function that can listen for `workflow_job` webhook events from a GHES instance.
 1. A workflow that can be configured in GHES to spin up ephemeral runners in Azure Container Instances (ACI) as well as tear down orphaned ACI.
+1. The steps that deploy (and clean up resources) are handled inside a workflow, so can easily be updated.
+
+> **Note**: The `PATs` that are used are VISIBLE as application settings on the Azure Function and inside the ACI containers. Make sure that you have proper RBAC configured for the Azure Function App as well as the ACI instances. Ideally, only administrators should be able to see these resources.
 
 ## Developing in CodeSpaces
 
@@ -32,7 +35,7 @@ sha="123"
 curl -H "Content-Type: application/json" -H "x-hub-signature: sha1=$sha" -X POST http://localhost:7071/api/WorkflowJob -L --data "@test/completed.json" -i
 ```
 
-> **Note**: The call should fail for mismatched signature. Check the output for the calculated hash and update the `sha` variable. Then repeat the command. If you change the contents of the file, repeat this process.
+> **Note**: The call should fail for mismatched signature. Check the function console output in the first terminal for the calculated hash and update the `sha` variable. Then repeat the command. If you change the contents of the file, repeat this process.
 
 ## Deploying the Function to Azure
 
@@ -63,20 +66,20 @@ Update these as necessary.
 
 > **Note**: The `ignore-label` is **CRITICAL**. If you do not configure this, you will get an infinte loop where the function is queuing a workflow which triggers another queue and so on and so on. Your _permanent_ runners should have the `permanent` label to avoid this!!
 
-> **Note**: The workflow that is triggered is `ghes/org/repo/ephemeral.yml@main` by default.
+> **Note**: The workflow that is triggered is `<ghes>/<org>/<repo>/ephemeral.yml@main` by default.
 
 Then excute the `🚀  Deploy WebHook Fn` Action!
 
-The last step (**Display URL**) of the function will emit the URL that you need to register. Note this URL as well as the value you configured for `SECRET`.
+The last step of the function (**Display URL**) will emit the URL that you need to register. Note this URL as well as the value you configured for `SECRET`.
 
 ## Configure GHES
 
 1. Configure your server to run Actions.
-1. Register a runner at org or enterprise level with the tag `permanent`. This runner will spin up ephemeral runners.
+1. Register a permanent runner at org or enterprise level with the tag `permanent`. This runner will spin up ephemeral runners.
 1. Sync the [azure/login](https://github.com/azure/login) repo using [actions-sync](https://github.com/actions/actions-sync).
-1. Create an org and repo for the workflow that is responsible for spinning up ephemeral agents (in response to the call from the Azure function).
+1. Create an org and repo for the workflow that is responsible for spinning up ephemeral agents (in response to the call from the Azure function). These are the `org` and `repo` that must be set in static values above.
 1. Copy the [ghes/ephemeral.yml](ghes/ephemeral.yml) file to the `.github/workflows` folder of the repo.
-1. Add the following secrets to the repo:
+1. Add the following secrets to the GHES repo:
    - `AZURE_CREDENTIALS`: Credentials to the Azure subscription where you want to run the ACI ephemeral runners
    - `REPO_PAT`: A personal access token with `repo` and `workflow` permissions - this will be used to generate a PAT to register the agent on the incoming repo.
 
