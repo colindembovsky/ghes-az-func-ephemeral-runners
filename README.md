@@ -85,6 +85,18 @@ The last step of the function (**Display URL**) will emit the URL that you need 
 
 > **Note**: If you have an Enterprise-level permanent runner, ensure that you edit the org runner settings to allow repos to see the Enterprise runner groups.
 
+### Static Values
+
+There are some static values in the `ephemeral.yml` file. Edit as necessary:
+
+```yml
+env:
+  rg_name: cd-ephemeral
+  aci_prefix: gh
+  runner_image: ghcr.io/colindembovsky/ubuntu-actions-runner:77e620b571af517697a900c6290388d5c6ed4294
+  ghes_url: https://colindembovsky-0cd7b2095901bb090.gh-quality.net
+```
+
 ### Set up the WebHook
 
 1. At the Enterprise (or org) settings, navigate to **Hooks** and add a new webhook.
