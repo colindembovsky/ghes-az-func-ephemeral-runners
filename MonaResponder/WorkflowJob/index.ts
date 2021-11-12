@@ -35,7 +35,7 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
         }
 
         // ignore 'in_progress' action
-        if (action !== "in_progress") {
+        if (action === "in_progress") {
             const msg = "Nothing to do for 'in_progress' event";
             context.log(msg);
             context.res = {
