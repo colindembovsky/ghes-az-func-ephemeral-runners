@@ -45,6 +45,16 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
         
         // check if the ignore label matches
         const ignoreLabel = process.env["IGNORE_LABEL"].toLocaleLowerCase();
+        if (!ignoreLabel) {
+            const msg = "No 'IGNORE_LABEL' value is set. Please set this value.";
+            context.log(msg);
+            context.res = {
+                status = 400,
+                body: msg
+            };
+            return;
+        }
+
         if (labels.findIndex(l => l.toLocaleLowerCase() === ignoreLabel) > -1) {
             const msg = `Found label ${ignoreLabel} so ignoring this event`;
             context.log(msg);
