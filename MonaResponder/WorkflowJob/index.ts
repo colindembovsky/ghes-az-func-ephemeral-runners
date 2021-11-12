@@ -49,7 +49,7 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
             const msg = "No 'IGNORE_LABEL' value is set. Please set this value.";
             context.log(msg);
             context.res = {
-                status = 400,
+                status: 400,
                 body: msg
             };
             return;
