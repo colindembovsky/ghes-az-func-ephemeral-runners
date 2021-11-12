@@ -7,6 +7,10 @@ This repo contains code for:
 
 > **Note**: The `PATs` that are used are VISIBLE as application settings on the Azure Function and inside the ACI containers. Make sure that you have proper RBAC configured for the Azure Function App as well as the ACI instances. Ideally, only administrators should be able to see these resources.
 
+## Video Demo
+
+[![Video Demo](https://img.youtube.com/vi/JMSL6ICSU3s/0.jpg)](https://www.youtube.com/watch?v=JMSL6ICSU3s)
+
 ## Deploying the Function to Azure
 
 There is an action to deploy for you! Add the secrets below, edit the static values in the workflow file and invoke.
