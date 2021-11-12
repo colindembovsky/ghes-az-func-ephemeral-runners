@@ -7,36 +7,6 @@ This repo contains code for:
 
 > **Note**: The `PATs` that are used are VISIBLE as application settings on the Azure Function and inside the ACI containers. Make sure that you have proper RBAC configured for the Azure Function App as well as the ACI instances. Ideally, only administrators should be able to see these resources.
 
-## Developing in CodeSpaces
-
-### Start the Emulator
-```bash
-cd MonaResponder
-
-# set the config
-export EPHEMERAL_SPINNER_ORG=central
-export EPHEMERAL_SPINNER_REPO=ephemeral-runner
-export EPHEMERAL_SPINNER_WORKFLOW=ephemeral.yml
-export EPHEMERAL_SPINNER_WORKFLOW_REF=main
-export GITHUB_SERVER=https://colindembovsky-0cd7b2095901bb090.gh-quality.net
-export GITHUB_SECRET=<secret>
-export IGNORE_LABEL=permanent
-export PAT=<PAT with repo and workflow permissions>
-
-# run the function emulator
-npm start
-```
-
-### curl
-1. Open a new terminal
-1. Run curl:
-```bash
-sha="123"
-curl -H "Content-Type: application/json" -H "x-hub-signature: sha1=$sha" -X POST http://localhost:7071/api/WorkflowJob -L --data "@test/completed.json" -i
-```
-
-> **Note**: The call should fail for mismatched signature. Check the function console output in the first terminal for the calculated hash and update the `sha` variable. Then repeat the command. If you change the contents of the file, repeat this process.
-
 ## Deploying the Function to Azure
 
 There is an action to deploy for you! Add the secrets below, edit the static values in the workflow file and invoke.
@@ -125,3 +95,33 @@ jobs:
 The only thing you have to do is configure the runner with `self-hosted` and then some other unique value. To ensure a unique value, you can use `${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ github.run_id }}`.
 
 When this job queues, the webhook will fire and the job will wait for a runner matching the labels. The Azure Function will extract the unique label out and then invoke the `ephemeral.yml` workflow in the configured repo. This will in turn create an ACI self-hosted runner registered to the same repo as the invoking workflow with the unique label. The job then executes in the ephemeral runner. Once the job completes, the ephemeral runner unregisters. Another webhook is then fired to remove the (now terminated) ACI.
+
+## Developing & Testing the Function in CodeSpaces
+
+### Start the Emulator
+```bash
+cd MonaResponder
+
+# set the config
+export EPHEMERAL_SPINNER_ORG=central
+export EPHEMERAL_SPINNER_REPO=ephemeral-runner
+export EPHEMERAL_SPINNER_WORKFLOW=ephemeral.yml
+export EPHEMERAL_SPINNER_WORKFLOW_REF=main
+export GITHUB_SERVER=https://colindembovsky-0cd7b2095901bb090.gh-quality.net
+export GITHUB_SECRET=<secret>
+export IGNORE_LABEL=permanent
+export PAT=<PAT with repo and workflow permissions>
+
+# run the function emulator
+npm start
+```
+
+### curl
+1. Open a new terminal
+1. Run curl:
+```bash
+sha="123"
+curl -H "Content-Type: application/json" -H "x-hub-signature: sha1=$sha" -X POST http://localhost:7071/api/WorkflowJob -L --data "@test/completed.json" -i
+```
+
+> **Note**: The call should fail for mismatched signature. Check the function console output in the first terminal for the calculated hash and update the `sha` variable. Then repeat the command. If you change the contents of the file, repeat this process.
